@@ -17,6 +17,12 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
     )
     PORT: int
+    APP_ENV: str
+    DB_USER: str
+    DB_PASSWORD: str
+    DB_HOST: str
+    DB_PORT: int
+    DB_NAME: str
 
 
 settings = Settings()  # type: ignore[call-arg] # Loaded from .env file
