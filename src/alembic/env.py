@@ -74,7 +74,10 @@ def run_migrations_online() -> None:
         configuration,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
-        connect_args={"ssl_verify_cert": True, "ssl_verify_identity": True},
+        connect_args={
+            "ssl_verify_cert": False,
+            "ssl_verify_identity": False,
+        },  # Disable SSL for local development; adjust as needed for production
     )
 
     with connectable.connect() as connection:
