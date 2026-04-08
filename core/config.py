@@ -1,6 +1,7 @@
 import os
 from urllib.parse import quote_plus
 
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Determine the path to the .env.local file relative to this config.py file
@@ -24,6 +25,10 @@ class Settings(BaseSettings):
     DB_HOST: str
     DB_PORT: int
     DB_NAME: str
+    ALGORITHM: str = "HS256"
+    REFRESH_TOKEN_TTL: int = 2592000  # in seconds (30 days)
+    ACCESS_TOKEN_TTL: int = 86400  # in seconds (1 day)
+    secret_key: SecretStr
 
     @property
     def DATABASE_URL(self) -> str:

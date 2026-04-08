@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import Type
 
 from sqlalchemy import DateTime, Enum, String, func
 from sqlalchemy.orm import Mapped, mapped_column
@@ -7,6 +8,10 @@ from sqlalchemy.orm import Mapped, mapped_column
 from db.database import Base
 
 from .user_role import UserRole
+
+
+def get_enum_values(enum_class: Type[UserRole]) -> list[str]:
+    return [item.value for item in enum_class.__members__.values()]
 
 
 class User(Base):
@@ -21,7 +26,12 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
     password: Mapped[str] = mapped_column(String(200), nullable=True)
     role: Mapped[UserRole] = mapped_column(
-        Enum(UserRole), default=UserRole.GUEST, nullable=False
+        Enum(
+            UserRole,
+            values_callable=get_enum_values,
+        ),
+        default=UserRole.GUEST,
+        nullable=False,
     )
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(

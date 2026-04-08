@@ -8,6 +8,8 @@ from core.config import settings
 from db.database import Base, engine
 from src import models
 
+from .routers import tokens
+
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
@@ -25,6 +27,8 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+app.include_router(tokens.router)
 
 
 @app.get("/health", status_code=200, tags=["health"])
