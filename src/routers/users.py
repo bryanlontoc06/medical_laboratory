@@ -13,6 +13,7 @@ from core.config import settings
 from db.database import get_db
 from src import models
 from src.auth.auth import create_token, hash_password, verify_password
+from src.auth.security_guards import get_current_user
 from src.schemas.tokens import Token
 from src.schemas.users import LoginResponse, UserCreate, UserResponse
 
@@ -22,11 +23,12 @@ api_key_header = APIKeyHeader(name="x-api-key", auto_error=False)
 bearer_scheme = HTTPBearer()
 
 
-@router.post("/register", response_model=UserResponse)
+@router.post(
+    "/register", response_model=UserResponse, dependencies=[Depends(get_current_user)]
+)
 async def register(
     user: UserCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
-    token: Annotated[str, Depends(bearer_scheme)],
 ):
     logger.info("--- [ START REGISTER ] ---")
     logger.info(f"payload: {user}")
@@ -65,7 +67,11 @@ async def register(
     return new_user
 
 
-@router.post("/authenticate")
+@router.post(
+    "/authenticate",
+    response_model=LoginResponse,
+    dependencies=[Depends(get_current_user)],
+)
 async def login(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Annotated[AsyncSession, Depends(get_db)],
