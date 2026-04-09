@@ -1,18 +1,14 @@
 from datetime import timedelta
-from typing import Annotated
+from typing import Annotated, Any
 
-import jwt
-from fastapi import APIRouter, Depends, HTTPException, Security
-from fastapi.security import APIKeyHeader, HTTPAuthorizationCredentials, HTTPBearer
-from jwt.exceptions import InvalidTokenError as JWTError
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import APIKeyHeader, HTTPBearer
 from loguru import logger
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.config import settings
-from db.database import get_db
 from src import models
 from src.auth.auth import create_token
+from src.auth.security_guards import get_current_user, verify_api_key
 from src.schemas.tokens import Token, TokenResponse
 
 router = APIRouter(prefix="/v1", tags=["Authentication"])
@@ -35,7 +31,7 @@ def create_user_tokens(user: models.User) -> Token:
     )
 
     refresh_token = create_token(
-        data={**base_data, "token_type": "refresh"},  # Siguraduhin na "refresh" ito
+        data={**base_data, "token_type": "refresh"},
         expires_delta=timedelta(seconds=settings.REFRESH_TOKEN_TTL),
     )
 
@@ -71,87 +67,45 @@ def create_user_tokens(user: models.User) -> Token:
 
 @router.post("/tokens", response_model=TokenResponse)
 async def generate(
-    db: Annotated[AsyncSession, Depends(get_db)],
-    x_api_key: str = Security(api_key_header),
+    user: Annotated[models.User, Depends(verify_api_key)],
 ):
     logger.info("--- [ START CREATE SESSION ] ---")
     logger.info("event: SESSION")
-    logger.info(f"payload: {x_api_key}")
+    logger.info(f"payload: {user}")
 
-    user_result = await db.execute(
-        select(models.User).where(models.User.uid == x_api_key)
-    )
-
-    user = user_result.scalar_one_or_none()
-
-    if user is None:
-        logger.warning(f"User not found for the given API key: {x_api_key}")
-        raise HTTPException(
-            status_code=404,
-            detail={
-                "error": {"code": "ERR_USER_NOT_FOUND", "message": "User not found"}
-            },
-        )
+    tokens = create_user_tokens(user)
 
     logger.info("event: SESSION")
     logger.info("--- [ END CREATE SESSION ] ---")
-    return TokenResponse(token=create_user_tokens(user))
+    return TokenResponse(token=tokens)
 
 
 @router.patch("/tokens")
 async def refresh(
-    db: Annotated[AsyncSession, Depends(get_db)],
-    token: Annotated[HTTPAuthorizationCredentials, Depends(bearer_scheme)],
+    current_session: Annotated[dict[str, Any], Depends(get_current_user)],
 ):
-    refresh_token = token.credentials
-    try:
-        logger.info("--- [ START REFRESH TOKEN ] ---")
-        logger.info(f"payload: {token}")
-        # jwt.decode (Verify + Decode)
-        payload = jwt.decode(
-            refresh_token,
-            settings.secret_key.get_secret_value(),
-            algorithms=[settings.ALGORITHM],
-        )
-
-        if payload.get("token_type") != "refresh":
-            raise HTTPException(
-                status_code=401,
-                detail={
-                    "error": {
-                        "code": "ERR_INVALID_TOKEN_TYPE",
-                        "message": "Not a refresh token",
-                    }
-                },
-            )
-
-        # get User Id
-        user_uid = payload.get("id")
-
-        user_result = await db.execute(
-            select(models.User).where(models.User.uid == user_uid)
-        )
-
-        user = user_result.scalar_one_or_none()
-
-        if user is None:
-            logger.warning(f"User not found for the given key: {user_uid}")
-            raise HTTPException(
-                status_code=404,
-                detail={
-                    "error": {"code": "ERR_UNAUTHORIZED", "message": "Unauthorized"}
-                },
-            )
-
-        logger.info("--- [ END REFRESH TOKEN ] ---")
-        return TokenResponse(token=create_user_tokens(user))
-    except JWTError:
+    logger.info("--- [ START REFRESH TOKEN ] ---")
+    logger.info(f"payload: {current_session.keys()}")
+    if current_session.get("token_type") != "refresh":
         raise HTTPException(
             status_code=401,
             detail={
                 "error": {
-                    "code": "ERR_INVALID_TOKEN",
-                    "message": "Invalid or expired token",
+                    "code": "ERR_INVALID_TOKEN_TYPE",
+                    "message": "Not a refresh token",
                 }
             },
         )
+    user = current_session.get("user")
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "error": {
+                    "code": "ERR_USER_NOT_FOUND",
+                    "message": "User context missing",
+                }
+            },
+        )
+    logger.info("--- [ END REFRESH TOKEN ] ---")
+    return TokenResponse(token=create_user_tokens(user))

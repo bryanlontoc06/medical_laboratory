@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_TTL: int = 2592000  # in seconds (30 days)
     ACCESS_TOKEN_TTL: int = 86400  # in seconds (1 day)
     secret_key: SecretStr
+    GUEST_UID: str
 
     @property
     def DATABASE_URL(self) -> str:
