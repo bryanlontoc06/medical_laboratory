@@ -1,24 +1,36 @@
+from typing import Any
+
 import pytest
 from httpx import AsyncClient
 
-from src.auth.security_guards import get_current_user
+from core.config import settings
+from src import models
+from src.auth.security_guards import get_current_user, verify_api_key
 from src.main import app
-
-
-def override_get_current_user():
-    return {
-        "id": "999e4567-e89b-12d3-a456-426614174000",
-        "email": "admin@example.com",
-        "role": "admin",
-    }
 
 
 @pytest.mark.asyncio
 class TestUserRoutes:
     @pytest.fixture(autouse=True)
     def setup_auth_override(self):
+        # 1. Nest the mock functions inside the fixture
+        # 2. Add type hints to satisfy Pylance
+        def override_verify_api_key() -> models.User:
+            return models.User(
+                uid=settings.GUEST_UID,
+                role="guest",
+                email="guest@example.com",
+            )
+
+        def override_get_current_user() -> dict[str, Any]:
+            return {"id": "some-id", "email": "admin@example.com"}
+
+        # Apply the overrides
+        app.dependency_overrides[verify_api_key] = override_verify_api_key
         app.dependency_overrides[get_current_user] = override_get_current_user
+
         yield
+        # Cleanup after each test
         app.dependency_overrides = {}
 
     async def test_register_success(self, client: AsyncClient):
@@ -28,7 +40,10 @@ class TestUserRoutes:
             "email": "juan@example.com",
             "password": "strongpassword123",
         }
-        headers = {"Authorization": "Bearer mock-token"}
+        headers = {
+            "Authorization": "Bearer mock-token",
+            "x-api-key": str(settings.GUEST_UID),
+        }
 
         response = await client.post("/v1/register", json=payload, headers=headers)
         if response.status_code == 422:

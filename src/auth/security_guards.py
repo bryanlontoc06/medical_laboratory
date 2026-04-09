@@ -26,6 +26,17 @@ async def verify_api_key(
     logger.info("START VERIFY API KEY")
     logger.info(f"API Key: {api_key}")
 
+    if not api_key:
+        raise HTTPException(
+            status_code=401,
+            detail={
+                "error": {
+                    "code": "ERR_MISSING_API_KEY",
+                    "message": "Missing API Key",
+                }
+            },
+        )
+
     result = await db.execute(select(models.User).where(models.User.uid == api_key))
     user = result.scalar_one_or_none()
 
@@ -37,6 +48,22 @@ async def verify_api_key(
         )
     logger.info("END VERIFY API KEY")
     return user
+
+
+def require_guest_client(
+    api_user: models.User = Depends(verify_api_key),
+) -> models.User:
+    if str(api_user.uid) != str(settings.GUEST_UID):
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "error": {
+                    "code": "ERR_INVALID_CLIENT_CREDENTIALS",
+                    "message": "This endpoint requires a valid Guest Client API Key.",
+                }
+            },
+        )
+    return api_user
 
 
 # 3. GUARD 2: JWT Check (The Session Guard)
