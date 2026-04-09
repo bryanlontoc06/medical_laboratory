@@ -29,7 +29,7 @@ async def async_session():
 
 @pytest_asyncio.fixture
 async def client(async_session: AsyncSession):
-    # Dependency override: Palitan ang real DB ng Test DB session
+    # Dependency override
     async def override_get_db():
         yield async_session
 

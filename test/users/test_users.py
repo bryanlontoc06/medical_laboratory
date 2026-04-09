@@ -1,9 +1,26 @@
 import pytest
 from httpx import AsyncClient
 
+from src.auth.security_guards import get_current_user
+from src.main import app
+
+
+def override_get_current_user():
+    return {
+        "id": "999e4567-e89b-12d3-a456-426614174000",
+        "email": "admin@example.com",
+        "role": "admin",
+    }
+
 
 @pytest.mark.asyncio
 class TestUserRoutes:
+    @pytest.fixture(autouse=True)
+    def setup_auth_override(self):
+        app.dependency_overrides[get_current_user] = override_get_current_user
+        yield
+        app.dependency_overrides = {}
+
     async def test_register_success(self, client: AsyncClient):
         payload = {
             "firstName": "Juan",
