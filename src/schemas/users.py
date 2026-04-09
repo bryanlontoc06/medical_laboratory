@@ -27,6 +27,7 @@ class UserCreate(UserBase):
 
 
 class UserResponse(BaseModel):
+    uid: str
     firstName: str
     lastName: str
     email: str

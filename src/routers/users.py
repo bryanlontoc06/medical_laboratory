@@ -48,7 +48,7 @@ async def register(
         )
 
     new_user = models.User(
-        uid=uuid.uuid4(),
+        uid=str(uuid.uuid4()),
         firstName=user.firstName,
         lastName=user.lastName,
         email=user.email.lower(),
