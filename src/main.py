@@ -7,6 +7,7 @@ from loguru import logger
 from core.config import settings
 from db.database import Base, engine
 from src import models
+from src.routers import templates
 
 from .routers import lab_fields, tokens, users
 
@@ -31,6 +32,7 @@ app = FastAPI(lifespan=lifespan)
 app.include_router(tokens.router)
 app.include_router(users.router)
 app.include_router(lab_fields.router)
+app.include_router(templates.router)
 
 
 @app.get("/health", status_code=200, tags=["health"])

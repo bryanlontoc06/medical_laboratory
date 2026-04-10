@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 # This will ensure that "text", "number", or "dropdown" will be the input_type
@@ -28,5 +28,4 @@ class LabFieldCreate(BaseModel):
 class LabFieldResponse(LabFieldCreate):
     id: str  # UUID string
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
