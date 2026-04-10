@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import JSON, Boolean, Column, Float, ForeignKey, Integer, String
+from sqlalchemy import JSON, Boolean, Column, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from db.database import Base
@@ -81,3 +81,4 @@ class PatientResult(Base):
     template_id = Column(String(36), ForeignKey(f"{LAB_TEMPLATES_TABLE}.id"))
     # JSONB format for flexible data entry by the admin
     result_data = Column(JSON, nullable=False)
+    remarks = Column(Text, nullable=True)
