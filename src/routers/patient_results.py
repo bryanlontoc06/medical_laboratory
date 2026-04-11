@@ -7,7 +7,7 @@ from db.database import get_db
 from src import models
 from src.schemas.patient_result import PatientResultResponse, PatientResultSubmit
 
-router = APIRouter(prefix="/v1", tags=["Patient Results"])
+router = APIRouter(prefix="/v1", tags=["Patients"])
 
 
 @router.post("/lab/results", response_model=PatientResultResponse)

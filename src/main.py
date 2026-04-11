@@ -7,6 +7,7 @@ from loguru import logger
 from core.config import settings
 from db.database import Base, engine
 from src import models
+from src.routers import patients
 
 from .routers import (
     lab_fields,
@@ -41,6 +42,7 @@ app.include_router(lab_fields.router)
 app.include_router(templates.router)
 app.include_router(template_structures.router)
 app.include_router(patient_results.router)
+app.include_router(patients.router)
 
 
 @app.get("/health", status_code=200, tags=["health"])

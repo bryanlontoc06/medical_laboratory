@@ -14,12 +14,16 @@ def get_enum_values(enum_class: Type[UserRole]) -> list[str]:
     return [item.value for item in enum_class.__members__.values()]
 
 
+def generate_uuid():
+    return str(uuid.uuid4())
+
+
 class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     uid: Mapped[str] = mapped_column(
-        String(36), unique=True, index=True, default=lambda: str(uuid.uuid4())
+        String(36), unique=True, index=True, default=generate_uuid
     )
     firstName: Mapped[str] = mapped_column(String(100), nullable=False)
     lastName: Mapped[str] = mapped_column(String(100), nullable=False)
