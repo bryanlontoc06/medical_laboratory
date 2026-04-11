@@ -40,7 +40,7 @@ async def register(
 
     existing_email = result.scalar_one_or_none()
     if existing_email is not None:
-        logger.warning(f"Email ${existing_email} already exists.")
+        logger.warning(f"Email {existing_email} already exists.")
         raise HTTPException(
             status_code=404,
             detail={

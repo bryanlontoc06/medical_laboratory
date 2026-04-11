@@ -38,15 +38,26 @@ async def get_template_structure_recursive(
             field = field_result.scalar_one_or_none()
 
             if field:
-                structure_list.append(
-                    {
-                        "type": "field",
-                        "field_id": field.id,
-                        "name": field.name,
-                        "input_type": field.input_type,
-                        "unit": field.unit,
-                    }
-                )
+                raw_field_data: dict[str, Any] = {
+                    "type": "field",
+                    "field_id": field.id,
+                    "name": field.name,
+                    "input_type": field.input_type,
+                    "unit": field.unit,
+                    "m_max_value": field.m_max_value,
+                    "m_min_value": field.m_min_value,
+                    "f_max_value": field.f_max_value,
+                    "f_min_value": field.f_min_value,
+                    "gen_max_value": field.gen_max_value,
+                    "gen_min_value": field.gen_min_value,
+                    "options": field.options,
+                }
+
+                filtered_field = {
+                    k: v for k, v in raw_field_data.items() if v is not None and v != 0
+                }
+
+                structure_list.append(filtered_field)
 
         # SCENARIO B: If another TEMPLATE (Sub-test/Package) is found
         elif c_id is not None:

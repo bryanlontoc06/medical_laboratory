@@ -17,11 +17,15 @@ def generate_uuid():
 class LabField(Base):
     __tablename__ = LAB_FIELDS_TABLE
     id = Column(String(36), primary_key=True, default=generate_uuid)
-    name = Column(String(100), nullable=False)
+    name = Column(String(100), unique=True, nullable=False)
     unit = Column(String(50), nullable=True)  # e.g., "mg/dL"
     input_type = Column(
         String(50), default="text"
     )  # e.g., "text", "number", "dropdown"
+
+    # Checklist/dropdown items
+    options = Column(JSON, nullable=True)
+
     # Male Reference Range
     m_min_value = Column(Float(10), nullable=True)
     m_max_value = Column(Float(10), nullable=True)
@@ -39,7 +43,7 @@ class LabField(Base):
 class LabTemplate(Base):
     __tablename__ = LAB_TEMPLATES_TABLE
     id = Column(String(36), primary_key=True, default=generate_uuid)
-    name = Column(String(100), nullable=False)
+    name = Column(String(100), unique=True, nullable=False)
     is_package = Column(
         Boolean, default=False
     )  # Set to 'True' if this represents a bundle of other tests
@@ -54,7 +58,7 @@ class LabTemplate(Base):
 
 # TABLE 3: Linker - Handles hierarchical/nesting logic
 class TemplateStructure(Base):
-    __tablename__ = "template_structure"
+    __tablename__ = "template_structures"
     id = Column(String(36), primary_key=True, default=generate_uuid)
     parent_id = Column(String(36), ForeignKey(f"{LAB_TEMPLATES_TABLE}.id"))
 
@@ -71,6 +75,9 @@ class TemplateStructure(Base):
     parent = relationship(
         "LabTemplate", foreign_keys=[parent_id], back_populates="structure"
     )
+
+    field = relationship("LabField", foreign_keys=[field_id])
+    child_template = relationship("LabTemplate", foreign_keys=[child_template_id])
 
 
 # TABLE 4: Actual Patient Results

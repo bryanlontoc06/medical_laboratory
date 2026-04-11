@@ -25,7 +25,7 @@ async def create_patient(
         )
     )
 
-    existing_patient = result.scalar_one_or_none()
+    existing_patient = result.scalars().first()
     if existing_patient:
         logger.warning(
             f"Patient {existing_patient.firstName} {existing_patient.lastName} already exists."
@@ -41,8 +41,6 @@ async def create_patient(
         )
 
     now = datetime.now()
-
-    print(f"NOW ==>> {now}")
 
     # --- 1. Define Ranges ---
     # Yearly Range (Jan 1 to Dec 31)

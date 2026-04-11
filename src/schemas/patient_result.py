@@ -17,3 +17,7 @@ class PatientResultSubmit(BaseModel):
 class PatientResultResponse(BaseModel):
     id: UUID
     status: str
+
+
+class PatientResultUpdate(PatientResultSubmit):
+    id: str  # UUID string
